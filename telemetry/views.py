@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import FileResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -149,3 +151,10 @@ class SessionDetailView(LoginRequiredMixin, DetailView):
         ctx["imports"] = self.object.csv_imports.all()
         ctx["quantities_data"] = list(MeasuredQuantity.objects.values("key", "name", "unit"))
         return ctx
+
+
+def openapi_yaml(request):
+    openapi_path = settings.BASE_DIR / "openapi.yaml"
+    if not openapi_path.exists():
+        raise Http404("OpenAPI файл не найден")
+    return FileResponse(openapi_path.open("rb"), content_type="application/yaml")

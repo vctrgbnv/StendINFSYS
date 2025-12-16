@@ -1,0 +1,447 @@
+openapi: 3.0.3
+info:
+  title: Stend Telemetry API
+  version: 1.0.0
+  description: API для управления стендом винтомоторных групп и загрузки телеметрии.
+servers:
+  - url: http://localhost:8000
+security:
+  - cookieAuth: []
+paths:
+  /api/motor-groups/:
+    get:
+      summary: Список винтомоторных групп
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MotorGroup'
+    post:
+      summary: Создать группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotorGroupInput'
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MotorGroup'
+  /api/motor-groups/{id}/:
+    get:
+      summary: Получить группу
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MotorGroup'
+    put:
+      summary: Полное обновление группы
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotorGroupInput'
+      responses:
+        '200': {description: Обновлено}
+    patch:
+      summary: Частичное обновление группы
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotorGroupInput'
+      responses:
+        '200': {description: Обновлено}
+    delete:
+      summary: Удалить группу
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': {description: Удалено}
+  /api/sessions/:
+    get:
+      summary: Список сессий
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+    post:
+      summary: Создать сессию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '201': {description: Создано}
+  /api/sessions/{id}/:
+    get:
+      summary: Получить сессию
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+    put:
+      summary: Полное обновление сессии
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '200': {description: Обновлено}
+    patch:
+      summary: Частичное обновление сессии
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionInput'
+      responses:
+        '200': {description: Обновлено}
+    delete:
+      summary: Удалить сессию
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': {description: Удалено}
+  /api/sessions/{id}/series/:
+    get:
+      summary: Получить временной ряд по величине для сессии
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+        - in: query
+          name: quantity
+          required: true
+          schema: {type: string}
+          description: Ключ величины (temperature, humidity, rpm, noise, thrust, throttle)
+        - in: query
+          name: from
+          required: false
+          schema: {type: string, format: date-time}
+          description: Начало интервала (ISO8601)
+        - in: query
+          name: to
+          required: false
+          schema: {type: string, format: date-time}
+          description: Конец интервала (ISO8601)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SeriesPoint'
+  /api/sessions/{id}/import-csv/:
+    post:
+      summary: Импортировать CSV для сессии
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Импорт завершен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: Ошибка импорта
+  /api/sensors/:
+    get:
+      summary: Список датчиков
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sensor'
+    post:
+      summary: Создать датчик
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorInput'
+      responses:
+        '201': {description: Создано}
+  /api/sensors/{id}/:
+    get:
+      summary: Получить датчик
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+    put:
+      summary: Обновить датчик
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorInput'
+      responses:
+        '200': {description: Обновлено}
+    patch:
+      summary: Частичное обновление датчика
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorInput'
+      responses:
+        '200': {description: Обновлено}
+    delete:
+      summary: Удалить датчик
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': {description: Удалено}
+  /api/sensor-channels/:
+    get:
+      summary: Список каналов датчиков
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorChannel'
+    post:
+      summary: Создать канал датчика
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorChannelInput'
+      responses:
+        '201': {description: Создано}
+  /api/sensor-channels/{id}/:
+    get:
+      summary: Получить канал датчика
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorChannel'
+    put:
+      summary: Обновить канал датчика
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorChannelInput'
+      responses:
+        '200': {description: Обновлено}
+    patch:
+      summary: Частичное обновление канала
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorChannelInput'
+      responses:
+        '200': {description: Обновлено}
+    delete:
+      summary: Удалить канал датчика
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204': {description: Удалено}
+  /api/quantities/:
+    get:
+      summary: Список доступных величин
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MeasuredQuantity'
+  /api/quantities/{id}/:
+    get:
+      summary: Получить величину
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeasuredQuantity'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+  schemas:
+    MotorGroup:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        description: {type: string}
+        created_at: {type: string, format: date-time}
+    MotorGroupInput:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        description: {type: string}
+    Session:
+      type: object
+      properties:
+        id: {type: integer}
+        motor_group: {type: integer}
+        motor_group_name: {type: string}
+        name: {type: string}
+        started_at: {type: string, format: date-time}
+        ended_at: {type: string, format: date-time, nullable: true}
+        notes: {type: string}
+        created_at: {type: string, format: date-time}
+    SessionInput:
+      type: object
+      required: [motor_group, name, started_at]
+      properties:
+        motor_group: {type: integer}
+        name: {type: string}
+        started_at: {type: string, format: date-time}
+        ended_at: {type: string, format: date-time, nullable: true}
+        notes: {type: string}
+    Sensor:
+      type: object
+      properties:
+        id: {type: integer}
+        stand: {type: integer}
+        stand_name: {type: string}
+        name: {type: string}
+        description: {type: string}
+        created_at: {type: string, format: date-time}
+    SensorInput:
+      type: object
+      required: [stand, name]
+      properties:
+        stand: {type: integer}
+        name: {type: string}
+        description: {type: string}
+    SensorChannel:
+      type: object
+      properties:
+        id: {type: integer}
+        sensor: {type: integer}
+        sensor_name: {type: string}
+        quantity: {type: integer}
+        quantity_key: {type: string}
+        quantity_name: {type: string}
+        label: {type: string}
+    SensorChannelInput:
+      type: object
+      required: [sensor, quantity]
+      properties:
+        sensor: {type: integer}
+        quantity: {type: integer}
+        label: {type: string}
+    MeasuredQuantity:
+      type: object
+      properties:
+        id: {type: integer}
+        key: {type: string}
+        name: {type: string}
+        unit: {type: string}
+    SeriesPoint:
+      type: object
+      properties:
+        ts: {type: string, format: date-time}
+        value: {type: number}
+    ImportResult:
+      type: object
+      properties:
+        status: {type: string}
+        rows_processed: {type: integer}
+        rows_failed: {type: integer}
+        error_message: {type: string}

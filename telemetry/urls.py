@@ -39,6 +39,7 @@ urlpatterns = [
     path("sessions/<int:pk>/edit/", views.SessionUpdateView.as_view(), name="session_edit"),
     path("sessions/<int:pk>/delete/", views.SessionDeleteView.as_view(), name="session_delete"),
 
+    path("api/openapi.yaml", views.openapi_yaml, name="openapi"),
     path("api/sessions/<int:pk>/series/", SessionSeriesView.as_view(), name="session_series_api"),
     path("api/sessions/<int:pk>/import-csv/", SessionImportCsvView.as_view(), name="session_import_csv_api"),
     path("api/", include(router.urls)),
