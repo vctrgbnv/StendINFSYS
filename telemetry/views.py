@@ -147,5 +147,5 @@ class SessionDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["imports"] = self.object.csv_imports.all()
-        ctx["quantities"] = MeasuredQuantity.objects.all()
+        ctx["quantities_data"] = list(MeasuredQuantity.objects.values("key", "name", "unit"))
         return ctx

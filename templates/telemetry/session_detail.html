@@ -25,8 +25,8 @@
     <div class="card h-100">
       <div class="card-body">
         <h5 class="card-title">Графики показаний</h5>
-        <div id="charts-container">
-          <p class="text-muted">Графики появятся после импорта данных.</p>
+        <div id="charts-container" class="row g-3">
+          <p class="text-muted">Загружаем данные...</p>
         </div>
       </div>
     </div>
@@ -54,4 +54,83 @@
     </table>
   </div>
 </div>
+{{ quantities_data|json_script:"quantities-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.min.js"></script>
+<script>
+  const quantities = JSON.parse(document.getElementById('quantities-data').textContent || '[]');
+  const chartsContainer = document.getElementById('charts-container');
+  const colors = ['#0d6efd', '#198754', '#dc3545', '#fd7e14', '#20c997', '#6f42c1'];
+
+  async function fetchSeries(quantityKey) {
+    const resp = await fetch(`/api/sessions/{{ session.id }}/series/?quantity=${quantityKey}`);
+    if (!resp.ok) {
+      throw new Error(`Ошибка запроса ${quantityKey}`);
+    }
+    return resp.json();
+  }
+
+  function renderChart(card, quantity, color) {
+    const canvas = card.querySelector('canvas');
+    const status = card.querySelector('.chart-status');
+    fetchSeries(quantity.key)
+      .then(data => {
+        if (!data.length) {
+          status.textContent = 'Нет данных';
+          return;
+        }
+        status.remove();
+        const points = data.map(p => ({x: p.ts, y: p.value}));
+        new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: {
+            datasets: [{
+              label: `${quantity.name} (${quantity.unit})`,
+              data: points,
+              borderColor: color,
+              backgroundColor: color + '33',
+              tension: 0.2,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: {legend: {display: false}},
+            scales: {
+              x: {type: 'time', time: {tooltipFormat: 'yyyy-MM-dd HH:mm:ss'}},
+              y: {title: {display: true, text: quantity.unit}},
+            },
+          }
+        });
+      })
+      .catch(err => {
+        status.textContent = err.message;
+      });
+  }
+
+  function buildCards() {
+    chartsContainer.innerHTML = '';
+    if (!quantities.length) {
+      chartsContainer.innerHTML = '<p class="text-muted">Величины не настроены.</p>';
+      return;
+    }
+    quantities.forEach((quantity, idx) => {
+      const col = document.createElement('div');
+      col.className = 'col-md-6';
+      const card = document.createElement('div');
+      card.className = 'card h-100';
+      card.innerHTML = `<div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0">${quantity.name} (${quantity.unit})</h6>
+        </div>
+        <div class="chart-status text-muted mb-2">Загрузка...</div>
+        <canvas height="120"></canvas>
+      </div>`;
+      col.appendChild(card);
+      chartsContainer.appendChild(col);
+      renderChart(card, quantity, colors[idx % colors.length]);
+    });
+  }
+
+  buildCards();
+</script>
 {% endblock %}
