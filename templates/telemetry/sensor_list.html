@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">Датчики</h1>
+  <a class="btn btn-primary" href="{% url 'telemetry:sensor_add' %}">Добавить</a>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr><th>Название</th><th>Стенд</th><th>Величины</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for sensor in sensors %}
+    <tr>
+      <td>{{ sensor.name }}</td>
+      <td>{{ sensor.stand.name }}</td>
+      <td>
+        {% for channel in sensor.channels.all %}
+          <span class="badge text-bg-secondary">{{ channel.quantity.name }}</span>
+        {% empty %}
+          —
+        {% endfor %}
+      </td>
+      <td class="text-end">
+        <a class="btn btn-sm btn-secondary" href="{% url 'telemetry:sensor_edit' sensor.id %}">Изменить</a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'telemetry:sensor_delete' sensor.id %}">Удалить</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-center">Пока нет датчиков</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

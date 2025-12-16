@@ -117,3 +117,6 @@ INFLUX_SETTINGS = {
     "bucket": os.getenv("INFLUXDB_BUCKET", "telemetry-bucket"),
     "token": os.getenv("INFLUXDB_TOKEN", "telemetry-token"),
 }
+
+LOGIN_REDIRECT_URL = "/sessions/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
