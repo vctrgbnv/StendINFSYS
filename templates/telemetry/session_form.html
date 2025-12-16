@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="h3 mb-3">{{ view.object and 'Редактировать сессию' or 'Новая сессия' }}</h1>
-<form method="post" class="card card-body">
+{% if object %}
+  <h1 class="h3 mb-3">Редактировать сессию</h1>
+{% else %}
+  <h1 class="h3 mb-3">Новая сессия</h1>
+{% endif %}<form method="post" class="card card-body">
   {% csrf_token %}
   {{ form.as_p }}
   <div class="d-flex gap-2">

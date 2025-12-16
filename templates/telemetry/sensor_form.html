@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="h3 mb-3">{{ view.object and 'Редактировать датчик' or 'Новый датчик' }}</h1>
+{% if object %}
+  <h1 class="h3 mb-3">Редактировать датчик</h1>
+{% else %}
+  <h1 class="h3 mb-3">Новый датчик</h1>
+{% endif %}
 <form method="post" class="card card-body">
   {% csrf_token %}
   {{ form.as_p }}
