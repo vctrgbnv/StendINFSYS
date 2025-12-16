@@ -2,11 +2,12 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework import permissions, viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .influx_repo import get_influx_repo
-from .models import MeasuredQuantity, MotorGroup, Sensor, SensorChannel, Session
+from .models import CsvImport, MeasuredQuantity, MotorGroup, Sensor, SensorChannel, Session
 from .serializers import (
     MeasuredQuantitySerializer,
     MotorGroupSerializer,
@@ -14,6 +15,7 @@ from .serializers import (
     SensorSerializer,
     SessionSerializer,
 )
+from .services import import_csv_to_session
 
 
 class MotorGroupViewSet(viewsets.ModelViewSet):
@@ -74,3 +76,25 @@ class SessionSeriesView(APIView):
         repo = get_influx_repo()
         data = repo.query_series(session_id=session.id, quantity=quantity.key, from_dt=from_dt, to_dt=to_dt)
         return Response(data)
+
+
+class SessionImportCsvView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, pk: int):
+        session = get_object_or_404(Session, pk=pk)
+        upload = request.FILES.get("file")
+        if not upload:
+            return Response({"detail": "file is required"}, status=400)
+        csv_import = import_csv_to_session(session, upload, file_name=upload.name)
+        status_code = 200 if csv_import.status == CsvImport.STATUS_SUCCESS else 400
+        return Response(
+            {
+                "status": csv_import.status,
+                "rows_processed": csv_import.rows_processed,
+                "rows_failed": csv_import.rows_failed,
+                "error_message": csv_import.error_message,
+            },
+            status=status_code,
+        )
