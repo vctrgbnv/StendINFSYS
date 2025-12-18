@@ -23,6 +23,7 @@ class SensorForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["quantities"].queryset = MeasuredQuantity.objects.all()
         if self.instance.pk:
             self.fields["quantities"].initial = self.instance.channels.values_list("quantity_id", flat=True)
 
@@ -65,3 +66,11 @@ class SessionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in ["started_at", "ended_at"]:
             self.fields[field].input_formats = ["%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"]
+
+    def clean(self):
+        cleaned = super().clean()
+        started_at = cleaned.get("started_at")
+        ended_at = cleaned.get("ended_at")
+        if started_at and ended_at and ended_at < started_at:
+            self.add_error("ended_at", "Дата окончания не может быть раньше начала")
+        return cleaned

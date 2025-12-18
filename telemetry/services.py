@@ -22,10 +22,11 @@ QUANTITY_FIELDS = {
 
 
 def ensure_default_stand() -> Stand:
-    stand = Stand.objects.first()
-    if stand:
-        return stand
-    return Stand.objects.create(name="Default Stand")
+    stand, _ = Stand.objects.get_or_create(
+        name="Default Stand",
+        defaults={"location": "", "description": "Основной стенд"},
+    )
+    return stand
 
 
 def resolve_sensor_for_quantity(quantity: MeasuredQuantity, sensor_cache: dict) -> Sensor:
@@ -57,7 +58,7 @@ def parse_timestamp(raw: str):
     return dt
 
 
-def import_csv_to_session(session: Session, file_obj, file_name: str | None = None) -> CsvImport:
+def import_csv_to_session(session: Session, file_obj, file_name: str | None = None, *, rethrow: bool = False) -> CsvImport:
     csv_import = CsvImport.objects.create(
         session=session,
         status=CsvImport.STATUS_PENDING,
@@ -123,10 +124,18 @@ def import_csv_to_session(session: Session, file_obj, file_name: str | None = No
         if points:
             repo.write_points(session, points)
 
+        if processed == 0:
+            raise ValueError("Нет валидных строк для импорта")
+
         csv_import.status = CsvImport.STATUS_SUCCESS
+    except ValueError as exc:
+        csv_import.status = CsvImport.STATUS_FAILED
+        csv_import.error_message = str(exc)
     except Exception as exc:  # noqa: BLE001
         csv_import.status = CsvImport.STATUS_FAILED
         csv_import.error_message = str(exc)
+        if rethrow:
+            raise
     finally:
         csv_import.rows_processed = processed
         csv_import.rows_failed = failed

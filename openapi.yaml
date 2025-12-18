@@ -170,6 +170,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SeriesPoint'
+        '400':
+          description: Некорректные параметры (например, формат from/to или порядок дат)
       description: >
         Без параметров from/to возвращает последние 500 точек. Передавайте from/to (ISO 8601) для выборки интервала.
   /api/sessions/{id}/import-csv/:
@@ -196,6 +198,8 @@ paths:
                 $ref: '#/components/schemas/ImportResult'
         '400':
           description: Ошибка импорта
+        '500':
+          description: Внутренняя ошибка при записи в InfluxDB или другой сбой
   /api/sensors/:
     get:
       summary: Список датчиков

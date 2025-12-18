@@ -56,6 +56,8 @@ class SessionSeriesView(APIView):
         if not raw:
             return None
         dt = parse_datetime(raw)
+        if not dt:
+            raise ValueError("invalid datetime")
         if dt and timezone.is_naive(dt):
             dt = timezone.make_aware(dt)
         return dt
@@ -71,8 +73,14 @@ class SessionSeriesView(APIView):
         except MeasuredQuantity.DoesNotExist:
             return Response({"detail": "unknown quantity"}, status=404)
 
-        from_dt = self._parse_dt(request.query_params.get("from"))
-        to_dt = self._parse_dt(request.query_params.get("to"))
+        try:
+            from_dt = self._parse_dt(request.query_params.get("from"))
+            to_dt = self._parse_dt(request.query_params.get("to"))
+        except ValueError:
+            return Response({"detail": "invalid datetime format"}, status=400)
+
+        if from_dt and to_dt and from_dt > to_dt:
+            return Response({"detail": "from must be before to"}, status=400)
 
         repo = get_influx_repo()
         try:
@@ -95,7 +103,20 @@ class SessionImportCsvView(APIView):
         upload = request.FILES.get("file")
         if not upload:
             return Response({"detail": "file is required"}, status=400)
-        csv_import = import_csv_to_session(session, upload, file_name=upload.name)
+        csv_import = None
+        try:
+            csv_import = import_csv_to_session(session, upload, file_name=upload.name, rethrow=True)
+        except Exception:  # noqa: BLE001
+            error_message = csv_import.error_message if csv_import else "Ошибка импорта"
+            return Response(
+                {
+                    "status": CsvImport.STATUS_FAILED,
+                    "rows_processed": csv_import.rows_processed if csv_import else 0,
+                    "rows_failed": csv_import.rows_failed if csv_import else 0,
+                    "error_message": error_message,
+                },
+                status=500,
+            )
         status_code = 200 if csv_import.status == CsvImport.STATUS_SUCCESS else 400
         return Response(
             {
