@@ -1,0 +1,73 @@
+Project stend_telemetry {
+  database_type: "PostgreSQL"
+  Note: "Показания (временные ряды) хранятся в InfluxDB, поэтому в ER не представлены отдельной таблицей."
+}
+
+Table stand {
+  id bigint [pk, increment]
+  name varchar
+  created_at timestamptz [note: "если есть в модели"]
+}
+
+Table motor_group {
+  id bigint [pk, increment]
+  name varchar
+  serial varchar [null]
+  description text [null]
+  created_at timestamptz [note: "если есть в модели"]
+}
+
+Table session {
+  id bigint [pk, increment]
+  motor_group_id bigint [not null]
+  name varchar
+  started_at timestamptz [null]
+  ended_at timestamptz [null]
+  notes text [null]
+  created_at timestamptz [note: "если есть в модели"]
+}
+
+Table sensor {
+  id bigint [pk, increment]
+  stand_id bigint [not null]
+  identifier varchar [unique, note: "если в модели есть уникальный идентификатор"]
+  name varchar
+  description text [null]
+  is_active boolean
+  created_at timestamptz [note: "если есть в модели"]
+}
+
+Table measured_quantity {
+  id bigint [pk, increment]
+  key varchar [unique, note: "temperature/humidity/rpm/noise/thrust/throttle"]
+  name varchar
+  unit varchar
+}
+
+Table sensor_channel {
+  id bigint [pk, increment]
+  sensor_id bigint [not null]
+  quantity_id bigint [not null]
+  channel_label varchar [null, note: "если есть"]
+  Indexes {
+    (sensor_id, quantity_id) [unique]
+  }
+}
+
+Table csv_import {
+  id bigint [pk, increment]
+  session_id bigint [not null]
+  original_filename varchar
+  status varchar [note: "pending/success/failed"]
+  rows_processed int
+  rows_failed int
+  error_text text [null]
+  created_at timestamptz
+  finished_at timestamptz [null]
+}
+
+Ref: session.motor_group_id > motor_group.id
+Ref: sensor.stand_id > stand.id
+Ref: sensor_channel.sensor_id > sensor.id
+Ref: sensor_channel.quantity_id > measured_quantity.id
+Ref: csv_import.session_id > session.id

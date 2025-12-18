@@ -8,8 +8,13 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "dev-secret-key"
+    else:
+        raise RuntimeError("DJANGO_SECRET_KEY is required when DEBUG=False")
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")]
 
 
@@ -24,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'telemetry',
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
