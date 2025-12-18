@@ -54,6 +54,32 @@
     </table>
   </div>
 </div>
+<div class="card mt-3">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="card-title mb-0">Таблица показаний</h5>
+      <div class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0">Величина</label>
+        <select id="table-quantity" class="form-select form-select-sm" style="width: 260px;"></select>
+      </div>
+    </div>
+
+    <div id="table-status" class="text-muted mb-2">Загрузка...</div>
+
+    <div class="table-responsive">
+      <table class="table table-sm table-striped align-middle">
+        <thead>
+          <tr>
+            <th style="width: 220px;">Время</th>
+            <th>Значение</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 {{ quantities_data|json_script:"quantities-data" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -132,5 +158,54 @@
   }
 
   buildCards();
+  const tableSelect = document.getElementById('table-quantity');
+const tableBody = document.getElementById('table-body');
+const tableStatus = document.getElementById('table-status');
+
+function fillTableSelect() {
+  tableSelect.innerHTML = '';
+  quantities.forEach(q => {
+    const opt = document.createElement('option');
+    opt.value = q.key;
+    opt.textContent = `${q.name} (${q.unit})`;
+    tableSelect.appendChild(opt);
+  });
+}
+
+function renderTableRows(data, unit) {
+  tableBody.innerHTML = '';
+  if (!data.length) {
+    tableBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Нет данных</td></tr>';
+    return;
+  }
+  for (const p of data) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.ts}</td><td>${p.value} ${unit}</td>`;
+    tableBody.appendChild(tr);
+  }
+}
+
+async function loadTable(quantityKey) {
+  const q = quantities.find(x => x.key === quantityKey);
+  tableStatus.textContent = 'Загрузка...';
+  try {
+    const data = await fetchSeries(quantityKey);
+    const last = data.slice(-50); // последние 50 точек
+    tableStatus.textContent = `Показано: ${last.length}`;
+    renderTableRows(last, q?.unit || '');
+  } catch (e) {
+    tableStatus.textContent = e.message;
+    tableBody.innerHTML = '';
+  }
+}
+
+if (quantities.length) {
+  fillTableSelect();
+  tableSelect.addEventListener('change', () => loadTable(tableSelect.value));
+  loadTable(tableSelect.value); // загрузить по умолчанию
+} else {
+  tableStatus.textContent = 'Величины не настроены.';
+}
+
 </script>
 {% endblock %}

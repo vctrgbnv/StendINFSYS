@@ -58,7 +58,7 @@ class SessionSeriesApiTests(TestCase):
         self.client.login(username="user", password="pass")
         motor_group = MotorGroup.objects.create(name="Group 1")
         self.session = Session.objects.create(motor_group=motor_group, name="Session 1")
-        MeasuredQuantity.objects.create(key="temperature", name="Temp", unit="C")
+        MeasuredQuantity.objects.get_or_create(key="temperature", defaults={"name": "Temp", "unit": "C"})
 
     def test_invalid_datetime_returns_400(self):
         resp = self.client.get(f"/api/sessions/{self.session.id}/series/?quantity=temperature&from=bad-date")
