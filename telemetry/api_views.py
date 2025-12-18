@@ -50,6 +50,7 @@ class MeasuredQuantityViewSet(viewsets.ReadOnlyModelViewSet):
 
 class SessionSeriesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    default_limit = 500
 
     def _parse_dt(self, raw):
         if not raw:
@@ -74,7 +75,14 @@ class SessionSeriesView(APIView):
         to_dt = self._parse_dt(request.query_params.get("to"))
 
         repo = get_influx_repo()
-        data = repo.query_series(session_id=session.id, quantity=quantity.key, from_dt=from_dt, to_dt=to_dt)
+        try:
+            if from_dt or to_dt:
+                data = repo.query_series(session_id=session.id, quantity=quantity.key, from_dt=from_dt, to_dt=to_dt)
+            else:
+                data = repo.query_last_points(session_id=session.id, quantity=quantity.key, limit=self.default_limit)
+        except Exception as exc:  # noqa: BLE001
+            return Response({"detail": f"Ошибка запроса к InfluxDB: {exc}"}, status=502)
+
         return Response(data)
 
 

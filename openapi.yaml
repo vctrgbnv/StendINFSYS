@@ -170,6 +170,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SeriesPoint'
+      description: >
+        Без параметров from/to возвращает последние 500 точек. Передавайте from/to (ISO 8601) для выборки интервала.
   /api/sessions/{id}/import-csv/:
     post:
       summary: Импортировать CSV для сессии

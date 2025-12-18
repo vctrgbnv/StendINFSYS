@@ -53,7 +53,8 @@
 
 ## API
 - CRUD: `/api/motor-groups/`, `/api/sessions/`, `/api/sensors/`, `/api/sensor-channels/`, `/api/quantities/`
-- Серии по величине: `GET /api/sessions/<id>/series/?quantity=temperature&from=...&to=...`
+- Серии по величине: `GET /api/sessions/<id>/series/?quantity=temperature&from=...&to=...`  
+  По умолчанию отдаёт последние 500 точек; передавайте `from`/`to` (ISO 8601), чтобы выбрать интервал.
 - Импорт CSV: `POST /api/sessions/<id>/import-csv/`
 - OpenAPI: `/api/openapi.yaml` (файл в репозитории `openapi.yaml`)
 
